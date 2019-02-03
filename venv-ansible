@@ -5,7 +5,7 @@ set -xe
 VENV=.ansbile
 
 if [ ! -d "VENV" ]; then
-    virtualenv $VENV
+    virtualenv --system-site-packages $VENV
 fi
 
 source $VENV/bin/activate
@@ -27,6 +27,24 @@ if [ -n "$JENKINS_URL" ]
 then
     # Running on Jenkins we want to see colorful output
     export ANSIBLE_FORCE_COLOR=true
+fi
+
+REQ_DIR=$WORKSPACE/roles-deps
+ROLE_DEPS=$WORKSPACE/roles-deps.yml
+
+if [ -e "$ROLE_DEPS" ] ;
+then
+    rm -rf "$REQ_DIR"
+    mkdir -p "$REQ_DIR"
+    ansible-galaxy install -f -r "$ROLE_DEPS" -p "$REQ_DIR"
+    export ANSIBLE_ROLES_PATH="$REQ_DIR"
+fi
+
+export PYCURL_SSL_LIBRARY=nss
+
+if [ -e "$WORKSPACE/requirements.txt" ] ;
+then
+    pip install -U -r $WORKSPACE/requirements.txt -q
 fi
 
 export ANSIBLE_SSH_RETRIES=10
